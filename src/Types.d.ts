@@ -7,15 +7,15 @@ export interface ServerMetadata {
 export interface DeviceMetadata {
   serviceList: RedundantServiceList
 }
-export interface RedundantServiceList{
+export interface RedundantServiceList {
   service: Service[]
 }
 export interface Service {
-  serviceType: string,
-  serviceId: string,
-  SCPDURL: string,
-  controlURL: string,
-  eventSubURL: string 
+  serviceType: string
+  serviceId: string
+  SCPDURL: string
+  controlURL: string
+  eventSubURL: string
 }
 export interface DigitalImagingDescXML {
   scpd: SpecificationInformation

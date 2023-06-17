@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "typescript": "tsc && node dist/index.js",
-    "lint": "eslint --fix ./src"
+    "lint": "eslint --fix ./src",
+    "docs": "npx typedoc ./src/*.ts"
   },
   "keywords": [],
   "author": "",
