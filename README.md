@@ -1,0 +1,1 @@
+The purpose of this package is to extract photos wirelessly from sony al

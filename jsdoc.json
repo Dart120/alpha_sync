@@ -1,0 +1,9 @@
+{
+    "inputFiles": ["src/"],
+    "mode": "modules",
+    "out": "docs/",
+    "exclude": ["**/*.spec.ts"],
+    "readme": "none",
+    "theme": "default",
+    "ignoreCompilerErrors": true
+  }
