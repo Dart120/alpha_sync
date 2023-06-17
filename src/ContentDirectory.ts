@@ -1,7 +1,7 @@
 import soapRequest from 'easy-soap-request'
 import { type XMLParser, type XMLBuilder } from 'fast-xml-parser'
 import type AlphaSyncTypes from './Types'
-import { type BrowseRequestObject, type BrowseResponseObject, type UPNPContainer, type UPNPImage } from './ContentDirectoryObjects'
+import { type ImageSizesResponse, type BrowseRequestObject, type BrowseResponseObject, type UPNPContainer, type UPNPImage } from './ContentDirectoryObjects'
 
 /**
  * @class
@@ -50,7 +50,7 @@ export class ContentDirectory {
         ...browseRequestObject
       }
     }
-    const xml = '<?xml version="1.0" encoding= "UTF-8"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body>' + this.builder.build(finalBrowseRequestObject) + '    </s:Body></s:Envelope>'
+    const xml = '<?xml version="1.0" encoding= "UTF-8"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body>' + (this.builder.build(finalBrowseRequestObject) as string) + '    </s:Body></s:Envelope>'
     return xml
   }
 
@@ -81,7 +81,7 @@ export class ContentDirectory {
         maxContentLength: 1000 * 1024 * 1024, // 10MB
         maxBodyLength: 1000 * 1024 * 1024
       })
-      const { headers, body, statusCode } = response
+      const { body } = response
 
       return body
     } catch (error) {
@@ -94,12 +94,12 @@ export class ContentDirectory {
    * Parses the response of a browse request.
    *
    * @private
-   * @param {string} xml_text_resp - The XML text response of the browse request.
+   * @param {string} xmlTextResponse - The XML text response of the browse request.
    * @returns {BrowseResponseObject} Returns the parsed BrowseResponseObject.
    */
-  private parse_browse_response (xml_text_resp: string): BrowseResponseObject {
-    const obj_response = this.parser.parse(xml_text_resp)
-    return obj_response['s:Envelope']['s:Body']['u:BrowseResponse']
+  private parse_browse_response (xmlTextResponse: string): BrowseResponseObject {
+    const objResponse = this.parser.parse(xmlTextResponse)
+    return objResponse['s:Envelope']['s:Body']['u:BrowseResponse']
   }
 
   /**
@@ -107,7 +107,7 @@ export class ContentDirectory {
     *
     * @param {string} suffix - The URL suffix.
     */
-  private construct_url (suffix: string) {
+  private construct_url (suffix: string): string {
     return 'http://' + this.IP + ':' + this.PORT + suffix
   }
 
@@ -115,12 +115,12 @@ export class ContentDirectory {
      * Parses a container XML string.
      *
      * @private
-     * @param {string} container_data - The container XML string.
+     * @param {string} containerData - The container XML string.
      * @returns {UPNPContainer} Returns the parsed UPNPContainer object.
      */
-  private parse_container (container_data: string): UPNPContainer {
-    const obj_response = this.parser.parse(container_data)
-    const res = obj_response['DIDL-Lite'].container
+  private parse_container (containerData: string): UPNPContainer {
+    const objResponse = this.parser.parse(containerData)
+    const res = objResponse['DIDL-Lite'].container
     return res
   }
 
@@ -128,32 +128,32 @@ export class ContentDirectory {
      * Parses an items XML string.
      *
      * @private
-     * @param {string} item_data - The items XML string.
+     * @param {string} itemData - The items XML string.
      * @returns {UPNPImage[]} Returns an array of parsed UPNPImage objects.
      */
-  private parse_items (item_data: string): UPNPImage[] {
-    const obj_response = this.parser.parse(item_data)
+  private parse_items (itemData: string): UPNPImage[] {
+    const objResponse = this.parser.parse(itemData)
     // console.log(obj_response,'bare resp')
-    let res = obj_response['DIDL-Lite'].item
+    let res = objResponse['DIDL-Lite'].item
     if (!Array.isArray(res)) {
       res = [res]
     }
-    res = res.map((image_meta: any) => {
+    res = res.map((imageMeta: any) => {
       // return image_meta.assign
 
-      image_meta.res.forEach((image: any) => {
+      imageMeta.res.forEach((image: ImageSizesResponse) => {
         if (image['#text'].includes('LRG_')) {
-          image_meta = Object.assign({ LRG: image['#text'] }, image_meta)
+          imageMeta = Object.assign({ LRG: image['#text'] }, imageMeta)
         } else if (image['#text'].includes('ORG_')) {
-          image_meta = Object.assign({ ORG: image['#text'] }, image_meta)
+          imageMeta = Object.assign({ ORG: image['#text'] }, imageMeta)
         } else if (image['#text'].includes('SM_')) {
-          image_meta = Object.assign({ SM: image['#text'] }, image_meta)
+          imageMeta = Object.assign({ SM: image['#text'] }, imageMeta)
         } else if (image['#text'].includes('TN_')) {
-          image_meta = Object.assign({ TN: image['#text'] }, image_meta)
+          imageMeta = Object.assign({ TN: image['#text'] }, imageMeta)
         }
       })
       // console.log(image_meta)
-      return image_meta
+      return imageMeta
     })
     // console.log(res)
     return res
@@ -183,10 +183,10 @@ export class ContentDirectory {
    * @returns {Promise<void>} Returns a promise that resolves when the tree generation is finished.
    * @throws Will throw an error if the tree generation fails.
    */
-  public async generate_tree () {
+  public async generate_tree (): Promise<void> {
     const xml = await this.send_browse_request(this.generate_return_all_browse_request('0'))
-    const browse_resp = this.parse_browse_response(xml)
-    this.root = this.parse_container(browse_resp.Result)
+    const browseResp = this.parse_browse_response(xml)
+    this.root = this.parse_container(browseResp.Result)
     this.root.children = []
     await this.populate_children_of(this.root)
   }
@@ -198,15 +198,15 @@ export class ContentDirectory {
      * @param {UPNPContainer} node - The node to populate the children of.
      * @returns {Promise<void>} Returns a promise that resolves when the children are populated.
      */
-  private async populate_children_of (node: UPNPContainer) {
+  private async populate_children_of (node: UPNPContainer): Promise<void> {
     const xml = await this.send_browse_request(this.generate_return_all_browse_request(node['@_id']))
-    const browse_resp = this.parse_browse_response(xml)
+    const browseResp = this.parse_browse_response(xml)
 
     let children: (UPNPContainer[] | UPNPImage[] | UPNPContainer | UPNPImage)
-    if (browse_resp.Result.includes('<container')) {
-      children = this.parse_container(browse_resp.Result) as (UPNPContainer[] | UPNPContainer)
+    if (browseResp.Result.includes('<container')) {
+      children = this.parse_container(browseResp.Result) as (UPNPContainer[] | UPNPContainer)
     } else {
-      children = this.parse_items(browse_resp.Result)
+      children = this.parse_items(browseResp.Result)
 
       if (node['dc:title'] in this.date_to_items) {
         this.date_to_items[node['dc:title']] = children
@@ -218,14 +218,14 @@ export class ContentDirectory {
     //   process.exit(0)
     if (Array.isArray(children)) {
       for (const child of children) {
-        if (child['upnp:class'] == 'object.container') {
+        if (child['upnp:class'] === 'object.container') {
           child.children = []
           await this.populate_children_of(child)
         }
         node.children.push(child)
       }
     } else {
-      if (children['upnp:class'] == 'object.container') {
+      if (children['upnp:class'] === 'object.container') {
         children.children = []
         await this.populate_children_of(children)
       }

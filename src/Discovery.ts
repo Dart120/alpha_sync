@@ -63,7 +63,7 @@ export class Discovery {
      * @private
      * @returns {Promise<void>}
      */
-  private async parse_services () {
+  private parse_services (): void {
     this.services.forEach((service: AlphaSyncTypes.Service) => {
       if (service.serviceId.includes('ContentDirectory')) {
         this.contentDirectoryDetails = service
@@ -84,18 +84,14 @@ export class Discovery {
      * @returns {Promise<void>} Returns a promise that resolves when the discovery process is finished.
      * @throws Will throw an error if the discovery process fails.
      */
-  public async discover_avaliable_services () {
-    await new Promise<void>(async (resolve, reject) => {
-      try {
-        await this.get_service_directory_object()
-        await this.get_service_list()
-        this.parse_services()
-
-        resolve()
-      } catch (error) {
-        reject(new Error('Error when discovering avaliable services'))
-      }
-    })
+  public async discover_avaliable_services (): Promise<void> {
+    try {
+      await this.get_service_directory_object()
+      await this.get_service_list()
+      this.parse_services()
+    } catch (error) {
+      throw new Error('Error when discovering avaliable services')
+    }
   }
 
   /**
@@ -106,15 +102,11 @@ export class Discovery {
      * @throws Will throw an error if the serviceDirectoryObject is undefined.
      */
   private async get_service_list (): Promise<void> {
-    await new Promise<void>(async (resolve, reject) => {
-      if (this.serviceDirectoryObject !== undefined) {
-        this.services = this.serviceDirectoryObject.root?.device?.serviceList?.service
-
-        resolve()
-      } else {
-        reject(new Error('serviceDirectoryObject was not defined'))
-      }
-    })
+    if (this.serviceDirectoryObject !== undefined) {
+      this.services = this.serviceDirectoryObject.root?.device?.serviceList?.service
+    } else {
+      throw new Error('serviceDirectoryObject was not defined')
+    }
   }
 
   /**
@@ -124,7 +116,7 @@ export class Discovery {
      * @param {string} suffix - The URL suffix.
      * @returns {string} Returns the constructed URL.
      */
-  public construct_url (suffix: string) {
+  public construct_url (suffix: string): string {
     return 'http://' + this.serverIP + ':' + this.serverPort + suffix
   }
 
@@ -137,20 +129,18 @@ export class Discovery {
      * @throws Will throw an error if the XML request fails.
      */
   public async requestXML (url: string): Promise<any> {
-    return await new Promise<Object>(async (resolve, reject) => {
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            Accept: '*/*'
-          }
-        })
-        const XML = (await response.text())
-        resolve(this.parser.parse(XML))
-      } catch (error) {
-        reject(new Error('Could not request XML from server'))
-      }
-    })
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: '*/*'
+        }
+      })
+      const XML = (await response.text())
+      return this.parser.parse(XML)
+    } catch (error) {
+      throw new Error('Could not request XML from server')
+    }
   }
 
   /**
@@ -176,23 +166,20 @@ export class Discovery {
      * @throws Will throw an error if fetching the service directory object fails.
      */
   private async get_service_directory_object (): Promise<void> {
-    await new Promise<void>(async (resolve, reject) => {
-      const url = this.discoveredServiceDirectoryUrl.length === 0 ? this.assumedServiceDirectoryUrl : this.discoveredServiceDirectoryUrl
-      this.scrape_service_discovery_url(url)
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            Accept: '*/*'
-          }
-        })
-        const serviceDiscoveryXML = (await response.text())
-        this.serviceDirectoryObject = this.parser.parse(serviceDiscoveryXML)
-        resolve()
-      } catch (error) {
-        reject(error)
-      }
-    })
+    const url = this.discoveredServiceDirectoryUrl.length === 0 ? this.assumedServiceDirectoryUrl : this.discoveredServiceDirectoryUrl
+    this.scrape_service_discovery_url(url)
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: '*/*'
+        }
+      })
+      const serviceDiscoveryXML = (await response.text())
+      this.serviceDirectoryObject = this.parser.parse(serviceDiscoveryXML)
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   /**
@@ -207,11 +194,12 @@ export class Discovery {
   public async SSDP (waitFor: number, sendEvery: number): Promise<void> {
     // this.socket.bind(this.port, this.addr, () => { console.log('Socket is bound and Listening') })
     await new Promise<void>((resolve, reject) => {
+      let timeoutId: number
       this.socket.on('message', (resp, rinfo) => {
         if (resp.toString().search('UPnP/1.0 SonyImagingDevice/1.0') !== -1) {
           this.serverDetails = resp.toString()
           this.socket.close()
-          clearInterval(interval)
+          clearTimeout(timeoutId)
           clearTimeout(timeout)
           const idx = this.serverDetails.split(/\r?\n/).findIndex((keyValue) => keyValue.startsWith('LOCATION: '))
           this.discoveredServiceDirectoryUrl = this.serverDetails.split(/\r?\n/)[idx].slice('LOCATION: '.length)
@@ -219,21 +207,29 @@ export class Discovery {
         }
       })
 
-      const interval = setInterval(async () => {
-        // called 5 times each time after one second
-        // before getting cleared by below timeout.
-        try {
-          await this.send_disc_msg()
-        } catch (error) {
-          clearInterval(interval)
-          clearTimeout(timeout)
-          this.socket.close()
-          reject(new Error('Error sending discovery message:'))
-        }
-      }, sendEvery) // delay is in milliseconds
+      function loop (obj: Discovery): void {
+        obj.send_disc_msg()
+          .then(() => { timeoutId = setTimeout(loop, sendEvery) })
+          .catch((error) => { console.error(error) })
+      }
 
-      const timeout = setTimeout(async () => {
-        clearInterval(interval) // clear above interval after 5 seconds
+      loop(this)
+
+      // const interval = setInterval(async () => {
+      //   // called 5 times each time after one second
+      //   // before getting cleared by below timeout.
+      //   try {
+      //     await this.send_disc_msg()
+      //   } catch (error) {
+      //     clearInterval(interval)
+      //     clearTimeout(timeout)
+      //     this.socket.close()
+      //     reject(new Error('Error sending discovery message:'))
+      //   }
+      // }, sendEvery) // delay is in milliseconds
+
+      const timeout = setTimeout(() => {
+        clearTimeout(timeoutId) // clear above interval after 5 seconds
         this.socket.close()
         reject(new Error('Could not find the camera'))
       }, waitFor)

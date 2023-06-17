@@ -47,9 +47,6 @@ export interface UPNPVideo {
   SM: string
   res: any[]
 }
-export interface Date_to_Items {
-
-}
 export interface BrowseRequestObject {
   ObjectID: number | string
   BrowseFlag: 'BrowseDirectChildren' | 'BrowseMetadata'
@@ -63,4 +60,7 @@ export interface BrowseResponseObject {
   NumberReturned: number
   TotalMatches: number
   UpdateID: string
+}
+export interface ImageSizesResponse {
+  '#text': string
 }
