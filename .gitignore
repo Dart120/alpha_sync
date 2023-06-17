@@ -1,0 +1,29 @@
+# .gitignore
+
+# dependencies
+/node_modules
+
+# testing
+/coverage
+
+# production
+/dist
+
+# misc
+.DS_Store
+.env
+*.log
+
+# IDE - Visual Studio Code specific
+.vscode
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
+
+# Yarn
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+.pnp.*
