@@ -16,6 +16,6 @@ jobs:
       - name: Install dependencies and build 🔧
         run: npm ci && npm run typescript
       - name: Publish package on NPM 📦
-        run: npm version minor && npm publish
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
