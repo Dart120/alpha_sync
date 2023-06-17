@@ -3,11 +3,13 @@
   "version": "1.2.0",
   "description": "",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "typescript": "tsc && node dist/index.js",
+    "typescript": "tsc",
     "lint": "eslint --fix ./src",
-    "docs": "npx typedoc ./src/*.ts"
+    "docs": "npx typedoc ./src/*.ts",
+    "prepublish": "tsc"
   },
   "keywords": [],
   "author": "",
