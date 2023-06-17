@@ -16,6 +16,8 @@ Install my-project with npm
 
 The following code snippet tries to discover the content directory service on the camera. It then constructs a tree using depth first search of all the images in the cameras file system. It then downloads all those images into the file ./images.
 
+Connect your computer to your camera via wifi. Go to MENU -> Network -> Send to Smartphone Func. -> Send to Smartphone -> Select on Smartphone. Then connect using the SSID and password that your camera provides. Then run the following code.
+
 ```javascript
 const {AlphaSync} = require('alpha_sync')
 const as = new AlphaSync()
