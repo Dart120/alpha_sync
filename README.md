@@ -46,7 +46,7 @@ Stick to the status quo"
 
 ## Documentation
 
-[Documentation](https://linktodocumentation)
+[Documentation](https://dart120.github.io/alpha_sync/)
 
 
 ## Features
