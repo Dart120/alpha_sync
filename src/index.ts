@@ -178,20 +178,23 @@ export class AlphaSync {
    * @throws Will throw an error if the image downloading process fails.
    */
   private async download_from_url (url: string, savePath: string, name?: string): Promise<void> {
-    await new Promise<void>((resolve, reject) => {
-      fetch(url, {
+    try {
+      const image = await fetch(url, {
         timeout: URL_TIMEOUT // wait for 5 seconds
-      }).then((image) => {
-        if (!fs.existsSync(savePath)) {
-          fs.mkdirSync(savePath, { recursive: true }) // The "recursive" option is for nested directories
-        }
-        if (name === undefined) {
-          name = this.today.getHours().toString() + ':' + this.today.getMinutes().toString() + ':' + this.today.getSeconds().toString()
-        }
-        const destination = fs.createWriteStream(path.join(savePath, `${name}`))
-        image.body.pipe(destination)
-        resolve()
-      }).catch((Error) => { reject(new Error(`While downloading images, could not download from ${url}`)) })
-    })
+      })
+
+      if (!fs.existsSync(savePath)) {
+        fs.mkdirSync(savePath, { recursive: true }) // The "recursive" option is for nested directories
+      }
+
+      if (name === undefined) {
+        name = this.today.getHours().toString() + ':' + this.today.getMinutes().toString() + ':' + this.today.getSeconds().toString()
+      }
+
+      const destination = fs.createWriteStream(path.join(savePath, `${name}`))
+      image.body.pipe(destination)
+    } catch (error) {
+      throw new Error(`While downloading images, could not download from ${url}`)
+    }
   }
 }
