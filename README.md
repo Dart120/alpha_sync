@@ -46,5 +46,27 @@ Stick to the status quo"
 
 ## Documentation
 
-[Documentation](https://dart120.github.io/alpha_sync/)
+[Documentation](https://linktodocumentation)
+
+
+## Features
+
+- Download all the images off your camera
+- Provide a data structure representing all the images in your camera organised by the date that they were taken
+
+
+## Roadmap
+
+- Redo download when program is cancelled before image is done
+
+- Better error handling
+
+- Support downloading images between two dates
+
+- Better systems for publishing
+
+
+## Tech Stack
+
+ Node, Typescript, UPnP
 
