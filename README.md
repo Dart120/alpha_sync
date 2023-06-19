@@ -29,6 +29,16 @@ as.discover_avaliable_services()
   .then(async ()=>{await as.get_all_images_dict('./images')})
   .catch((error) => console.log(error))
 ```
+And to download images between two dates (inclusive)
+```javascript
+const {AlphaSync} = require('alpha_sync')
+const as = new AlphaSync()
+
+as.discover_avaliable_services()
+  .then(async () => {await as.generate_tree()})
+  .then(async ()=>{await as.get_all_between_two_dates('./images',['2022','06','06'],['2023','05','30'])})
+  .catch((error) => console.log(error))
+```
 
 
 ## Acknowledgements
