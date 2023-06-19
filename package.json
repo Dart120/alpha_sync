@@ -1,6 +1,6 @@
 {
   "name": "alpha_sync",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -11,7 +11,12 @@
     "docs": "npx typedoc ./src/*.ts",
     "prepublish": "tsc"
   },
-  "keywords": ["sony","alpha","camera","images"],
+  "keywords": [
+    "sony",
+    "alpha",
+    "camera",
+    "images"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
