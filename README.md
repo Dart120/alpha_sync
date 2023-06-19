@@ -18,6 +18,8 @@ The following code snippet tries to discover the content directory service on th
 
 Connect your computer to your camera via wifi. Go to MENU -> Network -> Send to Smartphone Func. -> Send to Smartphone -> Select on Smartphone. Then connect using the SSID and password that your camera provides. Then run the following code.
 
+Please note that this will only transfer images and not videos!
+
 ```javascript
 const {AlphaSync} = require('alpha_sync')
 const as = new AlphaSync()

@@ -119,14 +119,52 @@ export class AlphaSync {
   }
 
   /**
-   * Fetches all images as per the date-to-items dictionary, where each date maps to multiple images.
+   * Fetches all images taken between two specific dates.
    *
-   * @param {string} savePath - The path to save the fetched images.
-   * @returns {Promise<void>} Returns a promise that resolves when all images are fetched and saved.
-   * @throws Will throw an error if there are no entries with specific keys in the record.
+   * @param {string} savePath - The path where the fetched images will be saved.
+   * @param {string[]} afterDate - The start date for fetching images, in the format ['YYYY', 'MM', 'DD'].
+   * @param {string[]} beforeDate - The end date for fetching images, in the format ['YYYY', 'MM', 'DD'].
+   * @returns {Promise<void>} Returns a promise that resolves when all images between the specified dates are fetched and saved.
+   * @throws Will throw an error if the dates are not in the correct format, or if there's an error in the image downloading process.
    */
-  public async get_all_images_dict (savePath: string): Promise<void> {
-    for (const key in this.date_to_items) {
+  public async get_all_between_two_dates (savePath: string, afterDate: string[], beforeDate: string[]): Promise<void> {
+    if (afterDate.length !== 3 && beforeDate.length !== 3) {
+      throw new Error('Dates must be in YYYY-MM-DD format')
+    }
+
+    const afterDateString = afterDate.join('-')
+    const beforeDateString = beforeDate.join('-')
+    const regex = /^\d{4}-\d{2}-\d{2}$/
+    if (!(regex.test(afterDateString) && regex.test(beforeDateString))) {
+      throw new Error('Dates must be in YYYY-MM-DD format')
+    }
+    const afterDateObj = new Date(afterDate.join('-'))
+    const beforeDateObj = new Date(beforeDate.join('-'))
+
+    const validRecords = Object.fromEntries(Object.entries(this.date_to_items).filter(([key]) => {
+      const currDate = new Date(key)
+      return currDate <= beforeDateObj && currDate >= afterDateObj
+    }))
+    try {
+      await this.get_all_images_from_dict(savePath, validRecords)
+    } catch (error) {
+      throw new Error('Error downloading images')
+    }
+  }
+
+  /**
+   * Fetches all images from a provided dictionary, where each date maps to multiple images.
+   *
+   * @param {string} savePath - The path where the fetched images will be saved.
+   * @param {Record<string, UPNPImage[]>} [dict] - An optional dictionary parameter where each key (date string) maps to an array of UPNPImage objects. If not provided, the function will use the `date_to_items` property of the class.
+   * @returns {Promise<void>} Returns a promise that resolves when all images from the dictionary are fetched and saved.
+   * @throws Will throw an error if there are no entries with specific keys in the record or if there's an error in the image downloading process.
+   */
+  public async get_all_images_from_dict (savePath: string, dict?: Record<string, UPNPImage[]>): Promise<void> {
+    if (dict === undefined) {
+      dict = this.date_to_items
+    }
+    for (const key in dict) {
       const p = path.join(savePath, key)
       const files = new Set()
       if (fs.existsSync(p)) {

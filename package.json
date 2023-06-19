@@ -11,7 +11,7 @@
     "docs": "npx typedoc ./src/*.ts",
     "prepublish": "tsc"
   },
-  "keywords": [],
+  "keywords": ["sony","alpha","camera","images"],
   "author": "",
   "license": "ISC",
   "dependencies": {
