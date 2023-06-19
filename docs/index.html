@@ -17,6 +17,8 @@
 <pre><code class="language-bash"><span class="hl-0">  </span><span class="hl-1">npm</span><span class="hl-0"> </span><span class="hl-2">install</span><span class="hl-0"> </span><span class="hl-2">alpha_sync</span>
 </code><button>Copy</button></pre>
 <a id="md:usageexamples" class="tsd-anchor"></a><h2><a href="#md:usageexamples">Usage/Examples</a></h2><p>The following code snippet tries to discover the content directory service on the camera. It then constructs a tree using depth first search of all the images in the cameras file system. It then downloads all those images into the file ./images.</p>
+<p>Connect your computer to your camera via wifi. Go to MENU -&gt; Network -&gt; Send to Smartphone Func. -&gt; Send to Smartphone -&gt; Select on Smartphone. Then connect using the SSID and password that your camera provides. Then run the following code.</p>
+<p>Please note that this will only transfer images and not videos!</p>
 <pre><code class="language-javascript"><span class="hl-3">const</span><span class="hl-0"> {</span><span class="hl-4">AlphaSync</span><span class="hl-0">} = </span><span class="hl-1">require</span><span class="hl-0">(</span><span class="hl-2">&#39;alpha_sync&#39;</span><span class="hl-0">)</span><br/><span class="hl-3">const</span><span class="hl-0"> </span><span class="hl-4">as</span><span class="hl-0"> = </span><span class="hl-3">new</span><span class="hl-0"> </span><span class="hl-1">AlphaSync</span><span class="hl-0">()</span><br/><br/><span class="hl-5">as</span><span class="hl-0">.</span><span class="hl-1">discover_avaliable_services</span><span class="hl-0">()</span><br/><span class="hl-0">  .</span><span class="hl-1">then</span><span class="hl-0">(</span><span class="hl-3">async</span><span class="hl-0"> () </span><span class="hl-3">=&gt;</span><span class="hl-0"> {</span><span class="hl-6">await</span><span class="hl-0"> </span><span class="hl-5">as</span><span class="hl-0">.</span><span class="hl-1">generate_tree</span><span class="hl-0">()})</span><br/><span class="hl-0">  .</span><span class="hl-1">then</span><span class="hl-0">(</span><span class="hl-3">async</span><span class="hl-0"> ()</span><span class="hl-3">=&gt;</span><span class="hl-0">{</span><span class="hl-6">await</span><span class="hl-0"> </span><span class="hl-5">as</span><span class="hl-0">.</span><span class="hl-1">get_all_images_dict</span><span class="hl-0">(</span><span class="hl-2">&#39;./images&#39;</span><span class="hl-0">)})</span><br/><span class="hl-0">  .</span><span class="hl-1">catch</span><span class="hl-0">((</span><span class="hl-5">error</span><span class="hl-0">) </span><span class="hl-3">=&gt;</span><span class="hl-0"> </span><span class="hl-5">console</span><span class="hl-0">.</span><span class="hl-1">log</span><span class="hl-0">(</span><span class="hl-5">error</span><span class="hl-0">))</span>
 </code><button>Copy</button></pre>
 <a id="md:acknowledgements" class="tsd-anchor"></a><h2><a href="#md:acknowledgements">Acknowledgements</a></h2><ul>
@@ -29,6 +31,21 @@
 Don&#39;t mess with the flow, no, no,
 Stick to the status quo&quot;</p>
 <a id="md:documentation" class="tsd-anchor"></a><h2><a href="#md:documentation">Documentation</a></h2><p><a href="https://dart120.github.io/alpha_sync/">Documentation</a></p>
+<a id="md:features" class="tsd-anchor"></a><h2><a href="#md:features">Features</a></h2><ul>
+<li>Download all the images off your camera</li>
+<li>Provide a data structure representing all the images in your camera organised by the date that they were taken</li>
+</ul>
+<a id="md:roadmap" class="tsd-anchor"></a><h2><a href="#md:roadmap">Roadmap</a></h2><ul>
+<li><p>Redo download when program is cancelled before image is done</p>
+</li>
+<li><p>Better error handling</p>
+</li>
+<li><p>Support downloading images between two dates</p>
+</li>
+<li><p>Better systems for publishing</p>
+</li>
+</ul>
+<a id="md:tech-stack" class="tsd-anchor"></a><h2><a href="#md:tech-stack">Tech Stack</a></h2><p> Node, Typescript, UPnP</p>
 </div></div>
 <div class="col-sidebar">
 <div class="page-menu">
@@ -58,7 +75,10 @@ Stick to the status quo&quot;</p>
 <li><a href="#md:usageexamples"><span>Usage/<wbr/>Examples</span></a></li>
 <li><a href="#md:acknowledgements"><span>Acknowledgements</span></a></li>
 <li><a href="#md:lessons-learned"><span>Lessons <wbr/>Learned</span></a></li>
-<li><a href="#md:documentation"><span>Documentation</span></a></li></ul></li></ul></li></ul></div></details></div>
+<li><a href="#md:documentation"><span>Documentation</span></a></li>
+<li><a href="#md:features"><span>Features</span></a></li>
+<li><a href="#md:roadmap"><span>Roadmap</span></a></li>
+<li><a href="#md:tech-stack"><span>Tech <wbr/>Stack</span></a></li></ul></li></ul></li></ul></div></details></div>
 <div class="site-menu">
 <nav class="tsd-navigation"><a href="index.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-4"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-namespace)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.33 16V7.24H10.77L13.446 14.74C13.43 14.54 13.41 14.296 13.386 14.008C13.37 13.712 13.354 13.404 13.338 13.084C13.33 12.756 13.326 12.448 13.326 12.16V7.24H14.37V16H12.93L10.266 8.5C10.282 8.692 10.298 8.936 10.314 9.232C10.33 9.52 10.342 9.828 10.35 10.156C10.366 10.476 10.374 10.784 10.374 11.08V16H9.33Z" fill="var(--color-text)"></path></g></svg><span>alpha_<wbr/>sync</span></a>
 <ul class="tsd-small-nested-navigation">
