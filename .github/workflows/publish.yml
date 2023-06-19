@@ -12,7 +12,7 @@ jobs:
           node-version: '19.x'
           registry-url: 'https://registry.npmjs.org'
       - name: Install dependencies and build 🔧
-        run: npm ci && npm run typescript
+        run: npm run docs && npm ci && npm run typescript
       - name: Publish package on NPM 📦
         run: npm publish
         env:
