@@ -63,10 +63,6 @@ Stick to the status quo"
 
 - Better error handling
 
-- Support downloading images between two dates
-
-- Better systems for publishing
-
 
 ## Tech Stack
 
