@@ -5,7 +5,7 @@ import { Discovery } from './Discovery'
 import { ContentDirectory } from './ContentDirectory'
 import fs from 'fs'
 import path from 'path'
-import { type UPNPContainer, type UPNPImage } from './ContentDirectoryObjects'
+import { type UPNPVideo, type UPNPContainer, type UPNPImage } from './ContentDirectoryObjects'
 
 /**
  * AlphaSync is a class responsible for discovering and interacting with Sony Alpha Camera's services.
@@ -25,7 +25,7 @@ export class AlphaSync {
 
   private readonly discovery: Discovery
   private contentDirectory: ContentDirectory | undefined
-  private date_to_items: Record<string, UPNPImage[]> = {}
+  public date_to_items: Record<string, UPNPImage[]> = {}
   private readonly builder = new XMLBuilder({ attributeNamePrefix: '@_', ignoreAttributes: false })
   private readonly parser = new XMLParser({
     ignoreAttributes: false,
@@ -40,6 +40,7 @@ export class AlphaSync {
   }
 
   /**
+   * @async
    * Initiates the SSDP (Simple Service Discovery Protocol) process for service discovery.
    *
    * @returns {Promise<void>} Returns a promise that resolves when the SSDP process is finished.
@@ -50,6 +51,7 @@ export class AlphaSync {
   }
 
   /**
+   * @async
    * Discovers the available services on the Sony Alpha Camera.
    *
    * @returns {Promise<void>} Returns a promise that resolves when the discovery of services is finished.
@@ -63,6 +65,7 @@ export class AlphaSync {
   }
 
   /**
+   * @async
    * Generates the Content Directory tree of the Sony Alpha Camera.
    *
    * @returns {Promise<void>} Returns a promise that resolves when the tree generation is finished.
@@ -78,6 +81,7 @@ export class AlphaSync {
   }
 
   /**
+   * @async
    * Fetches a single image from the Digital Imaging service.
    *
    * @param {string} savePath - The path to save the fetched image.
@@ -101,6 +105,7 @@ export class AlphaSync {
   }
 
   /**
+   * @async
    * Fetches all images from a specific container in the Content Directory service.
    *
    * @param {UPNPContainer} container - The container to fetch images from.
@@ -119,6 +124,7 @@ export class AlphaSync {
   }
 
   /**
+   * @async
    * Fetches all images taken between two specific dates.
    *
    * @param {string} savePath - The path where the fetched images will be saved.
@@ -153,6 +159,45 @@ export class AlphaSync {
   }
 
   /**
+   * Returns a Set of filenames of all existing images for a specific date in a given path.
+   *
+   * @private
+   * @param {string} key - Date for which images are checked.
+   * @param {string} savePath - Path where images are saved.
+   * @returns {Set<string>} Returns a set of filenames of existing images for the date specified.
+   */
+  private get_set_of_existing_images (key: string, savePath: string): Set<string> {
+    const p = path.join(savePath, key)
+    const files: Set<string> = new Set<string>()
+    if (fs.existsSync(p)) {
+      fs.readdirSync(p).forEach((file) => {
+        files.add(file)
+      })
+    }
+    return files
+  }
+
+  /**
+   * Checks if an image already exists in a specified directory. If it does not, the image will be downloaded and saved.
+   *
+   * @private
+   * @param {UPNPImage | UPNPVideo} item - The image or video to be checked.
+   * @param {Set<string>} files - Set of existing file names in the directory.
+   * @param {string} savePath - The path where the file would be saved.
+   * @param {string} key - The key, typically a date string, used to identify the image or video in question.
+   * @returns {Promise<void>} Returns a promise that resolves when the check and potential download are complete.
+   * @throws Will throw an error if there's an issue in the image downloading process.
+   */
+  private async check_image_already_exists (item: UPNPImage | UPNPVideo, files: Set<string>, savePath: string, key: string): Promise<void> {
+    if (!files.has(item['dc:title']) && item['upnp:class'] === 'object.item.imageItem.photo') {
+      await this.download_from_url(item.ORG, path.join(savePath, key), item['dc:title'])
+    } else {
+      console.info(`Found ${item['dc:title']} in ${key} already, skipping!`)
+    }
+  }
+
+  /**
+   * @async
    * Fetches all images from a provided dictionary, where each date maps to multiple images.
    *
    * @param {string} savePath - The path where the fetched images will be saved.
@@ -165,32 +210,18 @@ export class AlphaSync {
       dict = this.date_to_items
     }
     for (const key in dict) {
-      const p = path.join(savePath, key)
-      const files = new Set()
-      if (fs.existsSync(p)) {
-        fs.readdirSync(p).forEach((file) => {
-          files.add(file)
-          console.log(file)
-        })
-      }
+      const files: Set<string> = this.get_set_of_existing_images(key, savePath)
 
-      if (Object.prototype.hasOwnProperty.call(this.date_to_items, key)) {
-        const value = this.date_to_items[key]
+      const value = this.date_to_items[key]
 
-        for (const image of value) {
-          if (!files.has(image['dc:title']) && image['upnp:class'] === 'object.item.imageItem.photo') {
-            await this.download_from_url(image.ORG, path.join(savePath, key), image['dc:title'])
-          } else {
-            console.info(`Found ${image['dc:title']} in ${key} already, skipping!`)
-          }
-        }
-      } else {
-        throw new Error(`No entry with ${key} in record`)
+      for (const item of value) {
+        await this.check_image_already_exists(item, files, savePath, key)
       }
     }
   }
 
   /**
+   * @async
    * Fetches all images as per the Content Directory tree.
    *
    * @param {string} savePath - The path to save the fetched images.
@@ -206,16 +237,41 @@ export class AlphaSync {
   }
 
   /**
+   * @async
+   * Fetches all images from a specific date in the Content Directory service.
+   *
+   * @param {string} date - The date to fetch images from.
+   * @param {string} savePath - The path to save the fetched images.
+   * @returns {Promise<void>} A promise that resolves when all images are fetched and saved.
+   * @throws {Error} If the image fetching process fails.
+   */
+  public async get_all_images_in_date (date: string, savePath: string): Promise<void> {
+    if (this.date_to_items[date] !== undefined) {
+      const files = this.get_set_of_existing_images(date, savePath)
+      for (const item of this.date_to_items[date]) {
+        try {
+          await this.check_image_already_exists(item, files, savePath, date)
+        } catch (error) {
+          throw new Error(`Download of date ${date} failed `)
+        }
+      }
+    } else {
+      throw new Error('Date not in Record')
+    }
+  }
+
+  /**
+   * @async
    * Downloads an image from a specific URL.
    *
-   * @private
+   * @public
    * @param {string} url - The URL of the image to be downloaded.
    * @param {string} savePath - The path to save the downloaded image.
    * @param {string?} name - What the file will be called, the current time if not provided
    * @returns {Promise<void>} Returns a promise that resolves when the image is downloaded and saved.
    * @throws Will throw an error if the image downloading process fails.
    */
-  private async download_from_url (url: string, savePath: string, name?: string): Promise<void> {
+  public async download_from_url (url: string, savePath: string, name?: string): Promise<void> {
     try {
       const image = await fetch(url, {
         timeout: URL_TIMEOUT // wait for 5 seconds
