@@ -42,8 +42,8 @@ export class Discovery {
   public digitalImagingDetails: AlphaSyncTypes.Service | undefined
   public XPushListDetails: AlphaSyncTypes.Service | undefined
   public connectionManagerDetails: AlphaSyncTypes.Service | undefined
-  public serverIP = ''
-  public serverPort = ''
+  public serverIP = '192.168.122.1'
+  public serverPort = '64321'
   private services: AlphaSyncTypes.Service[] = []
   private serviceDirectoryObject: AlphaSyncTypes.ServiceDirectoryObject | undefined = undefined
   private readonly parser: XMLParser

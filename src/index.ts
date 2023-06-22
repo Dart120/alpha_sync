@@ -53,6 +53,15 @@ export class AlphaSync {
   }
 
   /**
+   * Gets discovered url
+   *
+   * @returns {string} Returns the url discovered via ssdp
+   */
+  get cameraUrl (): string {
+    return this.discovery.construct_url('')
+  }
+
+  /**
    * @async
    * Discovers the available services on the Sony Alpha Camera.
    *
@@ -63,7 +72,6 @@ export class AlphaSync {
     await this.discovery.discover_avaliable_services()
     this.addr = this.discovery.serverIP
     this.port = this.discovery.serverPort
-    this.url = this.discovery.construct_url('')
     if (this.discovery.contentDirectoryDetails != null) {
       this.contentDirectory = new ContentDirectory(this.discovery.serverIP, this.discovery.serverPort, this.discovery.contentDirectoryDetails, this.parser, this.builder)
     }
