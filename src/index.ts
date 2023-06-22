@@ -3,7 +3,7 @@ import { XMLParser, XMLBuilder } from 'fast-xml-parser'
 import type AlphaSyncTypes from './Types'
 import { Discovery } from './Discovery'
 import { ContentDirectory } from './ContentDirectory'
-import fs from 'fs'
+import fs from 'fs-extra'
 import path from 'path'
 import { type UPNPVideo, type UPNPContainer, type UPNPImage } from './ContentDirectoryObjects'
 
@@ -283,18 +283,19 @@ export class AlphaSync {
    * @throws Will throw an error if the image downloading process fails.
    */
   public async download_from_url (url: string, savePath: string): Promise<void> {
+    const names = savePath.split('/')
+    const noName = names.slice(0, names.length - 2).join('/')
     try {
       const image = await fetch(url, {
         timeout: URL_TIMEOUT // wait for 5 seconds
       })
+      await fs.remove(savePath) // Remove existing file or directory
+      await fs.ensureDir(noName) // Create the directory
 
-      if (!fs.existsSync(savePath)) {
-        fs.mkdirSync(savePath, { recursive: true }) // The "recursive" option is for nested directories
-      }
-      const destination = fs.createWriteStream(savePath)
-      image.body.pipe(destination)
+      const fileStream = fs.createWriteStream(savePath, { flags: 'w' })
+      image.body.pipe(fileStream)
     } catch (error) {
-      throw new Error(`While downloading images, could not download from ${url}`)
+      throw new Error(`While downloading images, could not download from ${url}: ${error as string}`)
     }
   }
 }
