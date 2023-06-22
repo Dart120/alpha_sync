@@ -24,6 +24,7 @@ export class AlphaSync {
   private readonly today = new Date()
   public port?: string = undefined
   public addr?: string = undefined
+  public url?: string = undefined
   private readonly discovery: Discovery
   private contentDirectory: ContentDirectory | undefined
   public date_to_items: Record<string, UPNPImage[]> = {}
@@ -62,6 +63,7 @@ export class AlphaSync {
     await this.discovery.discover_avaliable_services()
     this.addr = this.discovery.serverIP
     this.port = this.discovery.serverPort
+    this.url = this.discovery.construct_url('')
     if (this.discovery.contentDirectoryDetails != null) {
       this.contentDirectory = new ContentDirectory(this.discovery.serverIP, this.discovery.serverPort, this.discovery.contentDirectoryDetails, this.parser, this.builder)
     }
