@@ -22,7 +22,8 @@ const SSDP_SEND_EVERY: number = 3000
 export class AlphaSync {
   // Class Properties
   private readonly today = new Date()
-
+  public port?: string = undefined
+  public addr?: string = undefined
   private readonly discovery: Discovery
   private contentDirectory: ContentDirectory | undefined
   public date_to_items: Record<string, UPNPImage[]> = {}
@@ -59,6 +60,8 @@ export class AlphaSync {
    */
   public async discover_avaliable_services (): Promise<void> {
     await this.discovery.discover_avaliable_services()
+    this.addr = this.discovery.serverIP
+    this.port = this.discovery.serverPort
     if (this.discovery.contentDirectoryDetails != null) {
       this.contentDirectory = new ContentDirectory(this.discovery.serverIP, this.discovery.serverPort, this.discovery.contentDirectoryDetails, this.parser, this.builder)
     }
@@ -76,7 +79,7 @@ export class AlphaSync {
       await this.contentDirectory.generate_tree()
       this.date_to_items = this.contentDirectory.date_to_items
     } else {
-      throw new Error('UPNP Content Directory service Not discovered yet')
+      throw new Error('UPNP Content Directory service not discovered yet')
     }
   }
 
