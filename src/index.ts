@@ -130,7 +130,7 @@ export class AlphaSync {
       if (child['upnp:class'] === 'object.container') {
         await this.get_all_images_from_container(child, savePath)
       } else if (child['upnp:class'] === 'object.item.imageItem.photo') {
-        await this.download_from_url(child.ORG, savePath, child['dc:title'])
+        await this.download_from_url(child.ORG, path.join(savePath, child['dc:title']))
       }
     }
   }
@@ -202,7 +202,7 @@ export class AlphaSync {
    */
   private async check_image_already_exists (item: UPNPImage | UPNPVideo, files: Set<string>, savePath: string, key: string): Promise<void> {
     if (!files.has(item['dc:title']) && item['upnp:class'] === 'object.item.imageItem.photo') {
-      await this.download_from_url(item.ORG, path.join(savePath, key), item['dc:title'])
+      await this.download_from_url(item.ORG, path.join(savePath, key, item['dc:title']))
     } else {
       console.info(`Found ${item['dc:title']} in ${key} already, skipping!`)
     }
@@ -279,11 +279,10 @@ export class AlphaSync {
    * @public
    * @param {string} url - The URL of the image to be downloaded.
    * @param {string} savePath - The path to save the downloaded image.
-   * @param {string?} name - What the file will be called, the current time if not provided
    * @returns {Promise<void>} Returns a promise that resolves when the image is downloaded and saved.
    * @throws Will throw an error if the image downloading process fails.
    */
-  public async download_from_url (url: string, savePath: string, name?: string): Promise<void> {
+  public async download_from_url (url: string, savePath: string): Promise<void> {
     try {
       const image = await fetch(url, {
         timeout: URL_TIMEOUT // wait for 5 seconds
@@ -292,12 +291,7 @@ export class AlphaSync {
       if (!fs.existsSync(savePath)) {
         fs.mkdirSync(savePath, { recursive: true }) // The "recursive" option is for nested directories
       }
-
-      if (name === undefined) {
-        name = this.today.getHours().toString() + ':' + this.today.getMinutes().toString() + ':' + this.today.getSeconds().toString()
-      }
-
-      const destination = fs.createWriteStream(path.join(savePath, `${name}`))
+      const destination = fs.createWriteStream(savePath)
       image.body.pipe(destination)
     } catch (error) {
       throw new Error(`While downloading images, could not download from ${url}`)
