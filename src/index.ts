@@ -22,9 +22,8 @@ const SSDP_SEND_EVERY: number = 3000
 export class AlphaSync {
   // Class Properties
   private readonly today = new Date()
-  public port?: string = undefined
-  public addr?: string = undefined
-  public url?: string = undefined
+  private port?: string = undefined
+  private addr?: string = undefined
   private readonly discovery: Discovery
   private contentDirectory: ContentDirectory | undefined
   public date_to_items: Record<string, UPNPImage[]> = {}
