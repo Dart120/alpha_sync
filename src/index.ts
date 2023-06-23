@@ -218,16 +218,14 @@ export class AlphaSync {
    * @throws Will throw an error if there are no entries with specific keys in the record or if there's an error in the image downloading process.
    */
   public async get_all_images_from_dict (savePath: string, dict?: Record<string, UPNPImage[]>): Promise<void> {
-    if (dict === undefined) {
-      dict = this.date_to_items
-    }
+    console.log(savePath)
     for (const key in dict) {
-      const files: Set<string> = this.get_set_of_existing_images(key, savePath)
+      // const files: Set<string> = this.get_set_of_existing_images(key, savePath)
 
       const value = this.date_to_items[key]
 
       for (const item of value) {
-        await this.check_image_already_exists(item, files, savePath, key)
+        await this.download_from_url(item.ORG, path.join(savePath, key, item['dc:title']))
       }
     }
   }
@@ -283,17 +281,26 @@ export class AlphaSync {
    * @throws Will throw an error if the image downloading process fails.
    */
   public async download_from_url (url: string, savePath: string): Promise<void> {
+    // console.log(savePath)
     const names = savePath.split('/')
-    const noName = names.slice(0, names.length - 2).join('/')
+    // console.log(names)
+    const noName = names.slice(0, names.length - 1).join('/')
+    // console.log(noName)
     try {
       const image = await fetch(url, {
         timeout: URL_TIMEOUT // wait for 5 seconds
       })
       await fs.remove(savePath) // Remove existing file or directory
+      // console.log('remove')
       await fs.ensureDir(noName) // Create the directory
-
+      // console.log('ensuredir')
       const fileStream = fs.createWriteStream(savePath, { flags: 'w' })
-      image.body.pipe(fileStream)
+      await new Promise<void>((resolve, reject) => {
+        image.body.pipe(fileStream)
+          .on('finish', () => { resolve() })
+          .on('error', (err) => { reject(err) })
+      })
+      return
     } catch (error) {
       throw new Error(`While downloading images, could not download from ${url}: ${error as string}`)
     }
