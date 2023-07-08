@@ -22,6 +22,7 @@ const SSDP_SEND_EVERY: number = 3000
 export class AlphaSync {
   // Class Properties
   private readonly today = new Date()
+  public jobHasBeenCancelled: Boolean = false
   private port?: string = undefined
   private addr?: string = undefined
   private readonly discovery: Discovery
@@ -214,10 +215,10 @@ export class AlphaSync {
    *
    * @param {string} savePath - The path where the fetched images will be saved.
    * @param {Record<string, UPNPImage[]>} [dict] - An optional dictionary parameter where each key (date string) maps to an array of UPNPImage objects. If not provided, the function will use the `date_to_items` property of the class.
-   * @returns {Promise<void>} Returns a promise that resolves when all images from the dictionary are fetched and saved.
+   * @returns {Promise<boolean>} Returns a promise that resolves when all images from the dictionary are fetched and saved. True when job is finished, false when it is interrupted
    * @throws Will throw an error if there are no entries with specific keys in the record or if there's an error in the image downloading process.
    */
-  public async get_all_images_from_dict (savePath: string, dict?: Record<string, UPNPImage[]>): Promise<void> {
+  public async get_all_images_from_dict (savePath: string, dict?: Record<string, UPNPImage[]>): Promise<boolean> {
     console.log(savePath)
     for (const key in dict) {
       // const files: Set<string> = this.get_set_of_existing_images(key, savePath)
@@ -226,8 +227,14 @@ export class AlphaSync {
 
       for (const item of value) {
         await this.download_from_url(item.ORG, path.join(savePath, key, item['dc:title']))
+        if (this.jobHasBeenCancelled) {
+          this.jobHasBeenCancelled = false;
+          console.info("Job cancelled in backend")
+          return false
+        }
       }
     }
+    return true
   }
 
   /**
