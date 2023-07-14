@@ -312,5 +312,3 @@ export class AlphaSync {
     }
   }
 }
-const as = new AlphaSync()
-as.ssdp().then(() => { console.log('here') }).catch((error) => { console.log(error) })
