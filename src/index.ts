@@ -22,7 +22,7 @@ const SSDP_SEND_EVERY: number = 3000
 export class AlphaSync {
   // Class Properties
   private readonly today = new Date()
-  public jobHasBeenCancelled: Boolean = false
+  public jobHasBeenCancelled: boolean = false
   private port?: string = undefined
   private addr?: string = undefined
   private readonly discovery: Discovery
@@ -223,13 +223,12 @@ export class AlphaSync {
     for (const key in dict) {
       // const files: Set<string> = this.get_set_of_existing_images(key, savePath)
 
-      const value = this.date_to_items[key]
+      const value = dict[key]
 
       for (const item of value) {
         await this.download_from_url(item.ORG, path.join(savePath, key, item['dc:title']))
         if (this.jobHasBeenCancelled) {
-          this.jobHasBeenCancelled = false;
-          console.info("Job cancelled in backend")
+          this.jobHasBeenCancelled = false
           return false
         }
       }
@@ -313,3 +312,5 @@ export class AlphaSync {
     }
   }
 }
+const as = new AlphaSync()
+as.ssdp().then(() => { console.log('here') }).catch((error) => { console.log(error) })

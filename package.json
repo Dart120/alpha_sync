@@ -6,7 +6,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "typescript": "tsc",
+    "tsc": "tsc",
     "lint": "eslint --fix ./src/*.ts",
     "docs": "npx typedoc ./src/*.ts",
     "prepublish": "tsc"

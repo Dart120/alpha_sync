@@ -90,7 +90,7 @@ export class Discovery {
       await this.get_service_list()
       this.parse_services()
     } catch (error) {
-      throw new Error('Error when discovering avaliable services')
+      throw new Error(`Error when discovering avaliable services: ${error}`)
     }
   }
 
@@ -193,47 +193,55 @@ export class Discovery {
      */
   public async SSDP (waitFor: number, sendEvery: number): Promise<void> {
     // this.socket.bind(this.port, this.addr, () => { console.log('Socket is bound and Listening') })
-    await new Promise<void>((resolve, reject) => {
-      let timeoutId: number
-      this.socket.on('message', (resp, rinfo) => {
-        if (resp.toString().search('UPnP/1.0 SonyImagingDevice/1.0') !== -1) {
-          this.serverDetails = resp.toString()
-          this.socket.close()
-          clearTimeout(timeoutId)
-          clearTimeout(timeout)
-          const idx = this.serverDetails.split(/\r?\n/).findIndex((keyValue) => keyValue.startsWith('LOCATION: '))
-          this.discoveredServiceDirectoryUrl = this.serverDetails.split(/\r?\n/)[idx].slice('LOCATION: '.length)
-          resolve()
-        }
-      })
 
-      function loop (obj: Discovery): void {
-        obj.send_disc_msg()
-          .then(() => { timeoutId = setTimeout(loop, sendEvery) })
-          .catch((error) => { console.error(error) })
-      }
-
-      loop(this)
-
-      // const interval = setInterval(async () => {
-      //   // called 5 times each time after one second
-      //   // before getting cleared by below timeout.
-      //   try {
-      //     await this.send_disc_msg()
-      //   } catch (error) {
-      //     clearInterval(interval)
-      //     clearTimeout(timeout)
-      //     this.socket.close()
-      //     reject(new Error('Error sending discovery message:'))
-      //   }
-      // }, sendEvery) // delay is in milliseconds
-
-      const timeout = setTimeout(() => {
-        clearTimeout(timeoutId) // clear above interval after 5 seconds
+    let timeoutId: NodeJS.Timeout
+    this.socket.on('message', (resp, rinfo) => {
+      if (resp.toString().search('UPnP/1.0 SonyImagingDevice/1.0') !== -1) {
+        this.serverDetails = resp.toString()
         this.socket.close()
-        reject(new Error('Could not find the camera'))
-      }, waitFor)
+        clearTimeout(timeoutId)
+        clearTimeout(timeout)
+        const idx = this.serverDetails.split(/\r?\n/).findIndex((keyValue) => keyValue.startsWith('LOCATION: '))
+        this.discoveredServiceDirectoryUrl = this.serverDetails.split(/\r?\n/)[idx].slice('LOCATION: '.length)
+        console.log(this.discoveredServiceDirectoryUrl)
+      }
     })
+
+    // Function to create a delay
+    const delay = async (ms: number): Promise<void> => {
+      await new Promise(resolve => {
+        timeoutId = setTimeout(resolve, ms)
+      })
+    }
+
+    // Use the delay function before calling your async function
+    const loop = async (): Promise<void> => {
+      try {
+        await delay(sendEvery) // Delay for 5 seconds
+        await this.send_disc_msg()
+        await loop()
+      } catch (error) {
+        throw new Error(`Error sending discovery message because: ${error}`)
+      }
+    }
+
+    // Call the function
+    await loop()
+    // const loop = async (): Promise<void> => {
+    //   try {
+    //     await this.send_disc_msg()
+    //     timeoutId = setTimeout(loop, sendEvery)
+    //   } catch (error) {
+    //     throw new Error(`Error sending discovery message because: ${error}`)
+    //   }
+    // }
+
+    // await loop()
+
+    const timeout = setTimeout(() => {
+      clearTimeout(timeoutId) // clear above interval after 5 seconds
+      this.socket.close()
+    }, waitFor)
   }
 
   /**
