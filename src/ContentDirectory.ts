@@ -44,6 +44,8 @@ export class ContentDirectory {
      * @returns {string} Returns the Browse XML string.
      */
   private construct_browse_xml (browseRequestObject: BrowseRequestObject): string {
+    // Fails when not proper xml
+    // Succeeds when it is
     const finalBrowseRequestObject = {
       'u:Browse': {
         '@_xmlns:u': 'urn:schemas-upnp-org:service:ContentDirectory:1',
@@ -63,6 +65,7 @@ export class ContentDirectory {
    * @throws Will throw an error if the SOAP request fails.
    */
   private async send_browse_request (browseRequestObject: BrowseRequestObject): Promise<string> {
+    // Send the correct xml or errors when it cant
     const browseXML: string = this.construct_browse_xml(browseRequestObject)
     const url = this.construct_url(this.service_details.controlURL)
     const pheaders = {
@@ -98,6 +101,7 @@ export class ContentDirectory {
    * @returns {BrowseResponseObject} Returns the parsed BrowseResponseObject.
    */
   private parse_browse_response (xmlTextResponse: string): BrowseResponseObject {
+    // Errors when response isnt the correct shape otherwise okay
     const objResponse = this.parser.parse(xmlTextResponse)
     return objResponse['s:Envelope']['s:Body']['u:BrowseResponse']
   }
@@ -108,6 +112,7 @@ export class ContentDirectory {
     * @param {string} suffix - The URL suffix.
     */
   private construct_url (suffix: string): string {
+    // copy tests from discovery
     return 'http://' + this.IP + ':' + this.PORT + suffix
   }
 
@@ -119,6 +124,8 @@ export class ContentDirectory {
      * @returns {UPNPContainer} Returns the parsed UPNPContainer object.
      */
   private parse_container (containerData: string): UPNPContainer {
+    // errors when container not the right shape
+    // okay otherwise
     const objResponse = this.parser.parse(containerData)
     const res = objResponse['DIDL-Lite'].container
     return res
@@ -132,6 +139,8 @@ export class ContentDirectory {
      * @returns {UPNPImage[]} Returns an array of parsed UPNPImage objects.
      */
   private parse_items (itemData: string): UPNPImage[] {
+    // errors with mishappen data
+    // okay otherwise
     const objResponse = this.parser.parse(itemData)
     // console.log(obj_response,'bare resp')
     let res = objResponse['DIDL-Lite'].item
@@ -184,6 +193,8 @@ export class ContentDirectory {
    * @throws Will throw an error if the tree generation fails.
    */
   public async generate_tree (): Promise<void> {
+    // When I mock everything it works well
+    // When we throw an error it handles it
     const xml = await this.send_browse_request(this.generate_return_all_browse_request('0'))
     const browseResp = this.parse_browse_response(xml)
     this.root = this.parse_container(browseResp.Result)
@@ -199,6 +210,15 @@ export class ContentDirectory {
      * @returns {Promise<void>} Returns a promise that resolves when the children are populated.
      */
   private async populate_children_of (node: UPNPContainer): Promise<void> {
+    /**
+     * Successful population: Test that the method populates the children array of the node correctly when the service returns valid responses. This could be done by mocking the send_browse_request, parse_browse_response, parse_container, and parse_items methods to return predefined responses.
+
+Recursive population: Test that the method correctly populates children of children (i.e., it works correctly for nested containers). This can be done by returning different responses for different calls to the send_browse_request method.
+
+Empty children: Test that the method correctly handles a node that has no children. The service should return a response that indicates no children, and the children array of the node should be empty after calling the method.
+
+Error handling: Test that the method handles errors correctly when the service returns an error or an invalid response. This can be done by making the send_browse_request method throw an error or return an invalid response.
+     */
     const xml = await this.send_browse_request(this.generate_return_all_browse_request(node['@_id']))
     const browseResp = this.parse_browse_response(xml)
 

@@ -5,9 +5,9 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "tsc": "tsc",
-    "lint": "eslint --fix ./src/*.ts",
+    "test": "jest",
+    "tsc": "tsc --strict",
+    "lint": "eslint --fix ./src/*.ts ./tests/*.ts",
     "docs": "npx typedoc ./src/*.ts",
     "prepublish": "tsc"
   },
@@ -20,6 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@humeris/espresso-shot": "^4.0.0",
     "@types/express": "^4.17.17",
     "easy-soap-request": "^5.3.0",
     "express": "^4.18.2",
@@ -30,6 +31,7 @@
   "devDependencies": {
     "@types/easy-soap-request": "^4.1.1",
     "@types/fs-extra": "^11.0.1",
+    "@types/jest": "^29.5.3",
     "@types/node-fetch": "^2.6.4",
     "@typescript-eslint/parser": "^5.59.5",
     "eslint": "^8.40.0",
@@ -38,6 +40,8 @@
     "eslint-plugin-n": "^15.7.0",
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-react": "^7.32.2",
+    "jest": "^29.6.1",
+    "ts-jest": "^29.1.1",
     "typescript": "^5.0.4"
   },
   "repository": {

@@ -21,7 +21,6 @@ const SSDP_SEND_EVERY: number = 3000
  */
 export class AlphaSync {
   // Class Properties
-  private readonly today = new Date()
   public jobHasBeenCancelled: boolean = false
   private port?: string = undefined
   private addr?: string = undefined
@@ -49,6 +48,7 @@ export class AlphaSync {
    * @throws Will throw an error if the SSDP process fails.
    */
   public async ssdp (): Promise<void> {
+    // Mock this then if error then throw otherwise okay
     await this.discovery.SSDP(SSDP_WAIT_FOR, SSDP_SEND_EVERY)
   }
 
@@ -69,6 +69,7 @@ export class AlphaSync {
    * @throws Will throw an error if the discovery process fails or if the Content Directory service is not found.
    */
   public async discover_avaliable_services (): Promise<void> {
+    // Content directory should be defined, should error if nor
     await this.discovery.discover_avaliable_services()
     this.addr = this.discovery.serverIP
     this.port = this.discovery.serverPort
@@ -85,6 +86,7 @@ export class AlphaSync {
    * @throws Will throw an error if the Content Directory service is not found or discovered yet.
    */
   public async generate_tree (): Promise<void> {
+    // if error throw error else date to items should be defined
     if (this.contentDirectory != null) {
       await this.contentDirectory.generate_tree()
       this.date_to_items = this.contentDirectory.date_to_items
@@ -127,47 +129,13 @@ export class AlphaSync {
    * @throws Will throw an error if the image fetching process fails.
    */
   public async get_all_images_from_container (container: UPNPContainer, savePath: string): Promise<void> {
+    // with container of images it works
     for (const child of container.children) {
       if (child['upnp:class'] === 'object.container') {
         await this.get_all_images_from_container(child, savePath)
       } else if (child['upnp:class'] === 'object.item.imageItem.photo') {
         await this.download_from_url(child.ORG, path.join(savePath, child['dc:title']))
       }
-    }
-  }
-
-  /**
-   * @async
-   * Fetches all images taken between two specific dates.
-   *
-   * @param {string} savePath - The path where the fetched images will be saved.
-   * @param {string[]} afterDate - The start date for fetching images, in the format ['YYYY', 'MM', 'DD'].
-   * @param {string[]} beforeDate - The end date for fetching images, in the format ['YYYY', 'MM', 'DD'].
-   * @returns {Promise<void>} Returns a promise that resolves when all images between the specified dates are fetched and saved.
-   * @throws Will throw an error if the dates are not in the correct format, or if there's an error in the image downloading process.
-   */
-  public async get_all_between_two_dates (savePath: string, afterDate: string[], beforeDate: string[]): Promise<void> {
-    if (afterDate.length !== 3 && beforeDate.length !== 3) {
-      throw new Error('Dates must be in YYYY-MM-DD format')
-    }
-
-    const afterDateString = afterDate.join('-')
-    const beforeDateString = beforeDate.join('-')
-    const regex = /^\d{4}-\d{2}-\d{2}$/
-    if (!(regex.test(afterDateString) && regex.test(beforeDateString))) {
-      throw new Error('Dates must be in YYYY-MM-DD format')
-    }
-    const afterDateObj = new Date(afterDate.join('-'))
-    const beforeDateObj = new Date(beforeDate.join('-'))
-
-    const validRecords = Object.fromEntries(Object.entries(this.date_to_items).filter(([key]) => {
-      const currDate = new Date(key)
-      return currDate <= beforeDateObj && currDate >= afterDateObj
-    }))
-    try {
-      await this.get_all_images_from_dict(savePath, validRecords)
-    } catch (error) {
-      throw new Error('Error downloading images')
     }
   }
 
@@ -219,7 +187,7 @@ export class AlphaSync {
    * @throws Will throw an error if there are no entries with specific keys in the record or if there's an error in the image downloading process.
    */
   public async get_all_images_from_dict (savePath: string, dict?: Record<string, UPNPImage[]>): Promise<boolean> {
-    console.log(savePath)
+    // with dict it works with error it doesnt
     for (const key in dict) {
       // const files: Set<string> = this.get_set_of_existing_images(key, savePath)
 
@@ -238,46 +206,6 @@ export class AlphaSync {
 
   /**
    * @async
-   * Fetches all images as per the Content Directory tree.
-   *
-   * @param {string} savePath - The path to save the fetched images.
-   * @returns {Promise<void>} Returns a promise that resolves when all images are fetched and saved.
-   * @throws Will throw an error if the tree is not created yet. Run the generate_tree method before calling this method.
-   */
-  public async get_all_images_tree (savePath: string): Promise<void> {
-    if ((this.contentDirectory?.root) != null) {
-      await this.get_all_images_from_container(this.contentDirectory.root, savePath)
-    } else {
-      throw new Error('Tree not created, Run generate_tree')
-    }
-  }
-
-  /**
-   * @async
-   * Fetches all images from a specific date in the Content Directory service.
-   *
-   * @param {string} date - The date to fetch images from.
-   * @param {string} savePath - The path to save the fetched images.
-   * @returns {Promise<void>} A promise that resolves when all images are fetched and saved.
-   * @throws {Error} If the image fetching process fails.
-   */
-  public async get_all_images_in_date (date: string, savePath: string): Promise<void> {
-    if (this.date_to_items[date] !== undefined) {
-      const files = this.get_set_of_existing_images(date, savePath)
-      for (const item of this.date_to_items[date]) {
-        try {
-          await this.check_image_already_exists(item, files, savePath, date)
-        } catch (error) {
-          throw new Error(`Download of date ${date} failed `)
-        }
-      }
-    } else {
-      throw new Error('Date not in Record')
-    }
-  }
-
-  /**
-   * @async
    * Downloads an image from a specific URL.
    *
    * @public
@@ -287,6 +215,7 @@ export class AlphaSync {
    * @throws Will throw an error if the image downloading process fails.
    */
   public async download_from_url (url: string, savePath: string): Promise<void> {
+    // the save functions gets the correct info, with error it wont
     // console.log(savePath)
     const names = savePath.split('/')
     // console.log(names)
@@ -312,3 +241,6 @@ export class AlphaSync {
     }
   }
 }
+const as = new AlphaSync()
+
+as.discover_avaliable_services().then(() => { console.log('here') })

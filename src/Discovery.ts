@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
 import dgram from 'dgram'
 import fetch from 'node-fetch'
 import { type XMLParser } from 'fast-xml-parser'
@@ -59,6 +60,7 @@ export class Discovery {
 
   /**
      * Parses the services and assigns the service details to the appropriate properties.
+     * Will always capture the last service of that name.
      *
      * @private
      * @returns {Promise<void>}
@@ -67,12 +69,6 @@ export class Discovery {
     this.services.forEach((service: AlphaSyncTypes.Service) => {
       if (service.serviceId.includes('ContentDirectory')) {
         this.contentDirectoryDetails = service
-      } else if (service.serviceId.includes('ConnectionManager')) {
-        this.connectionManagerDetails = service
-      } else if (service.serviceId.includes('XPushList')) {
-        this.XPushListDetails = service
-      } else if (service.serviceId.includes('DigitalImaging')) {
-        this.digitalImagingDetails = service
       }
     })
   }
@@ -85,12 +81,13 @@ export class Discovery {
      * @throws Will throw an error if the discovery process fails.
      */
   public async discover_avaliable_services (): Promise<void> {
+    // An error in any of the async should throw the error
     try {
       await this.get_service_directory_object()
       await this.get_service_list()
       this.parse_services()
     } catch (error) {
-      throw new Error(`Error when discovering avaliable services: ${error}`)
+      throw new Error('Error when discovering avaliable services')
     }
   }
 
@@ -102,6 +99,8 @@ export class Discovery {
      * @throws Will throw an error if the serviceDirectoryObject is undefined.
      */
   private async get_service_list (): Promise<void> {
+    // If service dir object is undefined then throw otherwise services should be defined
+    console.dir(this.serviceDirectoryObject, { depth: 10 })
     if (this.serviceDirectoryObject !== undefined) {
       this.services = this.serviceDirectoryObject.root?.device?.serviceList?.service
     } else {
@@ -129,6 +128,7 @@ export class Discovery {
      * @throws Will throw an error if the XML request fails.
      */
   public async requestXML (url: string): Promise<any> {
+    // handles failed request, parsing failure, suncessful request
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -150,6 +150,7 @@ export class Discovery {
      * @param {String} url - The URL to extract details from.
      */
   private scrape_service_discovery_url (url: string): void {
+    // handle when ip and port arent present
     const suffix: string = url.slice('http://'.length)
 
     const middle: string = suffix.split('/')[0]
@@ -166,17 +167,11 @@ export class Discovery {
      * @throws Will throw an error if fetching the service directory object fails.
      */
   private async get_service_directory_object (): Promise<void> {
+    // check if url set correctly when we dont discover vs when we do, service dir obj is set when url is correct
     const url = this.discoveredServiceDirectoryUrl.length === 0 ? this.assumedServiceDirectoryUrl : this.discoveredServiceDirectoryUrl
     this.scrape_service_discovery_url(url)
     try {
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Accept: '*/*'
-        }
-      })
-      const serviceDiscoveryXML = (await response.text())
-      this.serviceDirectoryObject = this.parser.parse(serviceDiscoveryXML)
+      this.serviceDirectoryObject = await this.requestXML(url)
     } catch (error) {
       console.error(error)
     }
@@ -193,7 +188,15 @@ export class Discovery {
      */
   public async SSDP (waitFor: number, sendEvery: number): Promise<void> {
     // this.socket.bind(this.port, this.addr, () => { console.log('Socket is bound and Listening') })
+    /**
+     * Message Received: Test that when a message is received that contains the string 'UPnP/1.0 SonyImagingDevice/1.0', the function updates serverDetails and discoveredServiceDirectoryUrl appropriately, clears any timeouts, and closes the socket.
 
+Message Not Received: Test that if a message is received that does not contain the string 'UPnP/1.0 SonyImagingDevice/1.0', the function does not update serverDetails or discoveredServiceDirectoryUrl, and does not close the socket or clear the timeouts.
+
+Message Loop: Test that the function successfully sends discovery messages every sendEvery milliseconds, until a valid message is received or the timeout of waitFor milliseconds is reached.
+
+Timeout Reached: Test that if the timeout of waitFor milliseconds is reached without receiving a valid message, the function clears the send messages loop and closes the socket.
+     */
     let timeoutId: NodeJS.Timeout
     this.socket.on('message', (resp, rinfo) => {
       if (resp.toString().search('UPnP/1.0 SonyImagingDevice/1.0') !== -1) {
@@ -203,7 +206,7 @@ export class Discovery {
         clearTimeout(timeout)
         const idx = this.serverDetails.split(/\r?\n/).findIndex((keyValue) => keyValue.startsWith('LOCATION: '))
         this.discoveredServiceDirectoryUrl = this.serverDetails.split(/\r?\n/)[idx].slice('LOCATION: '.length)
-        console.log(this.discoveredServiceDirectoryUrl)
+        // console.log(this.discoveredServiceDirectoryUrl)
       }
     })
 
@@ -227,16 +230,6 @@ export class Discovery {
 
     // Call the function
     await loop()
-    // const loop = async (): Promise<void> => {
-    //   try {
-    //     await this.send_disc_msg()
-    //     timeoutId = setTimeout(loop, sendEvery)
-    //   } catch (error) {
-    //     throw new Error(`Error sending discovery message because: ${error}`)
-    //   }
-    // }
-
-    // await loop()
 
     const timeout = setTimeout(() => {
       clearTimeout(timeoutId) // clear above interval after 5 seconds
@@ -252,6 +245,7 @@ export class Discovery {
      * @throws Will throw an error if sending the discovery message fails.
      */
   private async send_disc_msg (): Promise<void> {
+    // sends msg, on error rejects
     await new Promise<void>((resolve, reject) => {
       this.socket.send(this.discoveryMessage, this.discoveryPort, this.discoveryAddr, error => {
         if (error != null) {

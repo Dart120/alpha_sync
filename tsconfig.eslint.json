@@ -1,0 +1,10 @@
+{
+    "extends": "./tsconfig.json",
+    "include": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.test.ts",
+      "**/*.spec.ts",
+      // other patterns to include all your TypeScript files...
+    ]
+}
