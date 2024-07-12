@@ -25,7 +25,7 @@ export class AlphaSync {
   private port?: string = undefined
   private addr?: string = undefined
   private readonly discovery: Discovery
-  private contentDirectory: ContentDirectory | undefined
+  public contentDirectory: ContentDirectory | undefined
   public date_to_items: Record<string, UPNPImage[]> = {}
   private readonly builder = new XMLBuilder({ attributeNamePrefix: '@_', ignoreAttributes: false })
   private readonly parser = new XMLParser({
@@ -243,4 +243,8 @@ export class AlphaSync {
 }
 const as = new AlphaSync()
 
-as.discover_avaliable_services().then(() => { console.log('here') })
+as.discover_avaliable_services().then(() => { as.generate_tree().then(() => {
+  as.contentDirectory?.printTree()
+  console.log(as.date_to_items['2024-8-3'].length)
+
+})})

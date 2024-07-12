@@ -67,7 +67,9 @@ export class ContentDirectory {
   private async send_browse_request (browseRequestObject: BrowseRequestObject): Promise<string> {
     // Send the correct xml or errors when it cant
     const browseXML: string = this.construct_browse_xml(browseRequestObject)
+    console.log(browseXML)
     const url = this.construct_url(this.service_details.controlURL)
+    console.log(url)
     const pheaders = {
       'Content-Type': 'text/xml',
       'Accept-Language': 'en-gb',
@@ -186,6 +188,17 @@ export class ContentDirectory {
     }
   }
 
+  private generate_incremeted_browse_request (parentID: string, increment: number): BrowseRequestObject {
+    return {
+      ObjectID: parentID,
+      BrowseFlag: 'BrowseDirectChildren',
+      Filter: '*',
+      StartingIndex: increment,
+      RequestedCount: 0,
+      SortCriteria: ''
+    }
+  }
+
   /**
    * Generates the Content Directory tree.
    *
@@ -227,6 +240,15 @@ Error handling: Test that the method handles errors correctly when the service r
       children = this.parse_container(browseResp.Result) as (UPNPContainer[] | UPNPContainer)
     } else {
       children = this.parse_items(browseResp.Result)
+      if (browseResp.NumberReturned !== browseResp.TotalMatches) {
+        let startingIndex: number = 50
+        while (startingIndex < browseResp.TotalMatches) {
+          const xml = await this.send_browse_request(this.generate_incremeted_browse_request(node['@_id'],startingIndex))
+          const browseResp = this.parse_browse_response(xml)
+          children.push(...this.parse_items(browseResp.Result))
+          startingIndex += 50
+        }
+      }
 
       if (node['dc:title'] in this.date_to_items) {
         this.date_to_items[node['dc:title']] = children

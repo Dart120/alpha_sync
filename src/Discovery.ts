@@ -130,6 +130,7 @@ export class Discovery {
   public async requestXML (url: string): Promise<any> {
     // handles failed request, parsing failure, suncessful request
     try {
+      console.log(url)
       const response = await fetch(url, {
         method: 'GET',
         headers: {
