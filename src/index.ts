@@ -243,8 +243,8 @@ export class AlphaSync {
 }
 const as = new AlphaSync()
 
-as.discover_avaliable_services().then(() => { as.generate_tree().then(() => {
-  as.contentDirectory?.printTree()
-  console.log(as.date_to_items['2024-8-3'].length)
+// as.discover_avaliable_services().then(() => { as.generate_tree().then(() => {
+//   as.contentDirectory?.printTree()
+//   console.log(as.date_to_items['2024-8-3'].length)
 
-})})
+// })})
